@@ -8,7 +8,7 @@ import axios, { AxiosError } from 'axios';
                     // validate here (zod)
                     const nl = nlBox ? nlBox : 'no'
                     const hashedPassword = await hash(password, 10);
-                    axios.post('https://l2gvl5jlxi5x5y3uzcqubcozy40yuzeh.lambda-url.eu-central-1.on.aws/User/createUser', {
+                    axios.post('https://tfsqezucvlwdw6wyjoktbonezi0fatic.lambda-url.eu-central-1.on.aws/User/createUser', {
                         "email":email,
                         "deviceId": nl,
                         "passwordHashed": hashedPassword,

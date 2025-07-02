@@ -6,7 +6,7 @@ import axios, { AxiosError } from 'axios';
                     const { searchParams } = new URL(request.url);
                     const email = searchParams.get("email");
                     // validate here (zod)
-                    const userResponse = await axios.get(`https://l2gvl5jlxi5x5y3uzcqubcozy40yuzeh.lambda-url.eu-central-1.on.aws/User/getUserByEmail?email=${email}`)
+                    const userResponse = await axios.get(`https://tfsqezucvlwdw6wyjoktbonezi0fatic.lambda-url.eu-central-1.on.aws/User/getUserByEmail?email=${email}`)
                     const userId = userResponse.data.userId;
                     console.log(userResponse.data.userId);
                     return NextResponse.json({ message: 'success', userId: userId });
@@ -23,7 +23,7 @@ import axios, { AxiosError } from 'axios';
                 try {
                     const { email, token } = await request.json();
                     // validate here (zod)
-                    axios.post('https://l2gvl5jlxi5x5y3uzcqubcozy40yuzeh.lambda-url.eu-central-1.on.aws/User/updateUserByUsername', {
+                    axios.post('https://tfsqezucvlwdw6wyjoktbonezi0fatic.lambda-url.eu-central-1.on.aws/User/updateUserByUsername', {
                        "username": email,
                        "authToken": token,
                   })
