@@ -63,41 +63,44 @@ export default function Form() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [showError, setShowError] = useState(false);
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setLoading(true);
-        setShowError(false);
-        const formData = new FormData(e.currentTarget);
-        const pw = generateId(25);
-        const formEmail = formData.get('email') as string;
-        const formNlBox = formData.get('nlBox') as string;
-        console.log(formNlBox);
-        await cognitoRegister(formEmail, pw)
-        .then(async (response)=> {
-            console.log('cognito response: ' + response?.toString());
-            await signIn("credentials", {
-                username: formEmail,
-                password: pw,
-                redirect: false,
-            }).then(async (loginResponse) => {
-                console.log('login response: ' + loginResponse?.toString());
-                if(!loginResponse?.error){
-                    const check = await submitUserCollectible(formEmail);
-                    console.log(JSON.stringify(check));
-                    router.push("/")
-                    router.refresh();
-                }
-                }).catch((error) => {
-                    console.log(error);
-                    setLoading(false);
-                    setShowError(true);
-                })
-        }).catch((error) => {
-            console.log(error);
-            setLoading(false);
-            setShowError(true);
-        })
-     }
+    
+    // In app/(auth)/register/form.tsx
+
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setShowError(false);
+    const formData = new FormData(e.currentTarget);
+    const pw = generateId(25);
+    const formEmail = formData.get('email') as string;
+
+    try {
+        await cognitoRegister(formEmail, pw);
+        console.log("Cognito registration successful and user auto-confirmed.");
+
+        const loginResponse = await signIn("credentials", {
+            username: formEmail,
+            password: pw,
+            redirect: false,
+        });
+
+        if (loginResponse?.error) {
+            throw new Error("Login failed after registration.");
+        }
+        console.log("Sign-in successful.");
+
+        await submitUserCollectible(formEmail);
+        console.log("User collectible submitted.");
+
+        router.push("/");
+        router.refresh();
+
+    } catch (error) {
+        console.error("Registration process failed:", error);
+        setLoading(false);
+        setShowError(true);
+    }
+};
     return (
         <form onSubmit={handleSubmit}>
             <Card className=' pt-0 mx-auto max-w-sm border-0 shadow-none mt-8'>
