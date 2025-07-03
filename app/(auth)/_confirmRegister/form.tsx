@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormEvent, useState } from 'react';
-import { cognitoConfirm } from '@/app/_helpers/registerHelpers';
+import { cognitoConfirm } from '@/app/_helpers/registerHelper';
 import { useSearchParams } from 'next/navigation'
 // import axios from 'axios';
 import { signIn } from 'next-auth/react'

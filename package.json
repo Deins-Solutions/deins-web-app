@@ -20,6 +20,7 @@
     "@react-three/fiber": "^9.1.2",
     "@types/three": "^0.176.0",
     "amazon-cognito-identity-js": "^6.3.15",
+    "aws-amplify": "^6.15.3",
     "aws-sdk": "^2.1692.0",
     "aws-sdk-js-codemod": "^2.4.5",
     "axios": "^1.9.0",

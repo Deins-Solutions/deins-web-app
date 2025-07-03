@@ -9,16 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormEvent, useState } from 'react';
-import { signIn } from 'next-auth/react'
+import { signIn as nextAuthSignIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation';
 import { 
     cognitoRegister, 
     cognitoConfirm, 
     cognitoInitiateEmailLogin, 
     cognitoCompleteEmailLogin 
-} from '@/app/_helpers/registerHelpers';
+} from '@/app/_helpers/registerHelper';
 
-// --- Helper Functions (can be moved to a separate file if preferred) ---
+// --- Helper Functions ---
 async function getUserIdWithRetry(email: string) {
     let retries = 5;
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -43,9 +43,12 @@ async function getUserIdWithRetry(email: string) {
 
 async function submitUserCollectible(email: string) {
     const randomInt = Math.floor(Math.random() * (14)) + 1;
-    // The /api/db/user route now returns the user object directly
-    const user = await getUserIdWithRetry(email); 
-    const userId = user.userId; // Access userId from the user object
+    const user = await getUserIdWithRetry(email);
+    if (!user || !user.userId) {
+        console.error("Could not retrieve user ID to submit collectible.");
+        return;
+    }
+    const userId = user.userId;
     await fetch(`/api/db/userCollectible`, {
         method: 'POST',
         body: JSON.stringify({
@@ -56,28 +59,24 @@ async function submitUserCollectible(email: string) {
     });
 }
 
-// --- Main Auth Form Component ---
+
 export default function AuthForm() {
     const router = useRouter();
     const [mode, setMode] = useState<'register' | 'login-password' | 'login-email'>('register');
     
-    // --- Generic State ---
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // --- Modal State ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'register' | 'login'>('register');
     const [isConfirming, setIsConfirming] = useState(false);
     const [confirmationCode, setConfirmationCode] = useState('');
     const [modalError, setModalError] = useState('');
-    const [cognitoSession, setCognitoSession] = useState<string | null>(null);
-
-    // --- Alert Dialog State ---
+    
     const [isAlertOpen, setIsAlertOpen] = useState(false);
-
+    
     const resetFormState = () => {
         setLoading(false);
         setError('');
@@ -87,10 +86,8 @@ export default function AuthForm() {
         setIsConfirming(false);
         setConfirmationCode('');
         setModalError('');
-        setCognitoSession(null);
     };
 
-    // --- Handler for Registration ---
     const handleRegisterSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
@@ -123,7 +120,6 @@ export default function AuthForm() {
         }
     };
 
-    // --- Handler for Login with Password ---
     const handlePasswordLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
@@ -132,7 +128,7 @@ export default function AuthForm() {
         const formEmail = formData.get('email') as string;
         const formPassword = formData.get('password') as string;
 
-        const result = await signIn('credentials', {
+        const result = await nextAuthSignIn('credentials', {
             username: formEmail,
             password: formPassword,
             redirect: false,
@@ -147,7 +143,6 @@ export default function AuthForm() {
         }
     };
 
-    // --- Handler for Login with Email (Step 1) ---
     const handleEmailLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
@@ -156,23 +151,30 @@ export default function AuthForm() {
         const formEmail = formData.get('email') as string;
 
         try {
-            const session = await cognitoInitiateEmailLogin(formEmail);
+            await cognitoInitiateEmailLogin(formEmail);
             setEmail(formEmail);
-            setCognitoSession(session); // Store session needed for the next step
             setModalMode('login');
             setIsModalOpen(true);
         } catch (err) {
-            if (err instanceof Error && err.name === 'UserNotFoundException') {
-                setError('Kein Konto mit dieser E-Mail-Adresse gefunden.');
+            // Updated error handling for better debugging
+            console.error("Email Login Error:", err);
+            if (err instanceof Error) {
+                if (err.name === 'UserNotFoundException') {
+                    setError('Kein Konto mit dieser E-Mail-Adresse gefunden.');
+                } else if (err.name === 'InvalidParameterException' || err.message.includes('CUSTOM_AUTH')) {
+                    setError('Custom Auth ist für diesen App Client nicht aktiviert.');
+                }
+                else {
+                    setError('Ein unerwarteter Fehler ist aufgetreten.');
+                }
             } else {
-                setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+                 setError('Ein unerwarteter Fehler ist aufgetreten.');
             }
         } finally {
             setLoading(false);
         }
     };
 
-    // --- Handler for Modal Confirmation (Handles both Register and Login) ---
     const handleConfirm = async () => {
         setIsConfirming(true);
         setModalError('');
@@ -180,7 +182,7 @@ export default function AuthForm() {
         try {
             if (modalMode === 'register') {
                 await cognitoConfirm(email, confirmationCode);
-                const loginResponse = await signIn("credentials", {
+                const loginResponse = await nextAuthSignIn("credentials", {
                     username: email,
                     password: password,
                     redirect: false,
@@ -188,9 +190,8 @@ export default function AuthForm() {
                 if (loginResponse?.error) throw new Error("Login failed after confirmation.");
                 await submitUserCollectible(email);
             } else { // modalMode === 'login'
-                if (!cognitoSession) throw new Error("Cognito session not found.");
-                const idToken = await cognitoCompleteEmailLogin(email, confirmationCode, cognitoSession);
-                const loginResponse = await signIn("cognito-token", {
+                const idToken = await cognitoCompleteEmailLogin(confirmationCode);
+                const loginResponse = await nextAuthSignIn("cognito-token", {
                     idToken: idToken,
                     redirect: false,
                 });
@@ -250,7 +251,7 @@ export default function AuthForm() {
                 </div>
                 <div className='mt-4 text-center text-sm'>
                     Sie haben bereits ein Konto?{' '}
-                    <Button variant="link" type="button" onClick={() => { resetFormState(); setMode('login-password'); }}>
+                    <Button variant="link" type="button" onClick={() => { resetFormState(); setMode('login-email'); }}>
                         Klicken Sie hier
                     </Button>
                 </div>

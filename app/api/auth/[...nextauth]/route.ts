@@ -10,10 +10,13 @@ import * as jose from 'jose';
 interface ExtendedUser extends User {
   idToken?: string;
 }
+
 interface ExtendedToken extends JWT {
   idToken?: string;
 }
-interface ExtendedSession extends Session {
+
+// Export this so other server components can use it for type safety
+export interface ExtendedSession extends Session {
   idToken?: string;
 }
 
@@ -52,7 +55,6 @@ export const authOptions: NextAuthOptions = {
                 try {
                     const response = await cognitoClient.send(new InitiateAuthCommand(params));
                     if (response.AuthenticationResult?.IdToken) {
-                        // Pass the token along with the user object
                         return { 
                             id: credentials.username, 
                             name: credentials.username, 
@@ -83,7 +85,7 @@ export const authOptions: NextAuthOptions = {
                              id: payload.sub!, 
                              name: payload.email, 
                              email: payload.email,
-                             idToken: credentials.idToken // Pass the token along
+                             idToken: credentials.idToken
                         };
                     }
                     return null;
@@ -95,25 +97,19 @@ export const authOptions: NextAuthOptions = {
         })
     ],
     callbacks: {
-        // The jwt callback is invoked when a JWT is created or updated.
         async jwt({ token, user }: { token: ExtendedToken, user?: ExtendedUser }) {
-            // On sign-in, the user object contains the idToken from the authorize function.
-            // Persist this token to the JWT.
             if (user) {
                 token.idToken = user.idToken;
             }
             return token;
         },
-        // The session callback is invoked when a session is checked.
         async session({ session, token }: { session: ExtendedSession, token: ExtendedToken }) {
-            // Add the idToken from the JWT to the session object,
-            // making it available to server-side code.
             session.idToken = token.idToken;
             return session;
         }
     },
     pages: {
-        signIn: "/auth/register"
+        signIn: "/register"
     },
 };
 

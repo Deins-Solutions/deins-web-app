@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticatedApiCall } from "../../../_helpers/api_helper";
+import { authenticatedApiCall } from "../../../_helpers/apiHelper";
 
 export async function GET(request: Request) {
     try {
