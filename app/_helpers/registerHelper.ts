@@ -3,7 +3,8 @@ import {
     confirmSignUp, 
     signIn, 
     confirmSignIn,
-    fetchAuthSession
+    fetchAuthSession,
+    resendSignUpCode
     // AuthFlowType has been removed from the import as it's not exported
 } from 'aws-amplify/auth';
 
@@ -23,14 +24,11 @@ export function cognitoConfirm(email: string, confirmCode: string) {
     return confirmSignUp({ username: email, confirmationCode: confirmCode });
 }
 
-
+export function cognitoResendConfirmation(email: string) {
+    return resendSignUpCode({ username: email });
+}
 // --- Email Login Functions using Amplify ---
 
-/**
- * Initiates the custom authentication flow for email-based login using Amplify.
- * @param email The user's email address.
- * @returns A promise that resolves when the custom challenge has been initiated.
- */
 export async function cognitoInitiateEmailLogin(email: string) {
     // The fix is to use the string literal 'CUSTOM_AUTH' directly.
     const { nextStep } = await signIn({ 
@@ -45,16 +43,9 @@ export async function cognitoInitiateEmailLogin(email: string) {
     }
 }
 
-/**
- * Completes the custom authentication flow by sending the verification code.
- * @param code The code from the email.
- * @returns A promise that resolves with the user's ID token upon successful login.
- */
 export async function cognitoCompleteEmailLogin(code: string) {
-    // The state is managed internally by Amplify after the initial signIn call.
     const { isSignedIn } = await confirmSignIn({ challengeResponse: code });
     if (isSignedIn) {
-        // After confirming, fetch the session to get the tokens.
         const session = await fetchAuthSession();
         const idToken = session.tokens?.idToken?.toString();
         if (!idToken) {
