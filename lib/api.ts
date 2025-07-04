@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 async function makeDirectApiCall(token: string, endpoint: string, params?: Record<string, unknown>) {
     if (!API_BASE_URL) {
