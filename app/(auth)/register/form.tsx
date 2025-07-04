@@ -17,6 +17,7 @@ import {
     cognitoInitiateEmailLogin, 
     cognitoCompleteEmailLogin 
 } from '@/app/_helpers/registerHelper';
+import { signOut } from 'aws-amplify/auth';
 
 // --- Helper Functions ---
 async function getUserIdWithRetry(email: string) {
@@ -156,19 +157,26 @@ export default function AuthForm() {
             setModalMode('login');
             setIsModalOpen(true);
         } catch (err) {
-            // Updated error handling for better debugging
-            console.error("Email Login Error:", err);
-            if (err instanceof Error) {
-                if (err.name === 'UserNotFoundException') {
-                    setError('Kein Konto mit dieser E-Mail-Adresse gefunden.');
-                } else if (err.name === 'InvalidParameterException' || err.message.includes('CUSTOM_AUTH')) {
-                    setError('Custom Auth ist für diesen App Client nicht aktiviert.');
+            // Check for the specific stale session error
+            if (err instanceof Error && err.name === 'UserAlreadyAuthenticatedException') {
+                console.log("Stale Amplify session detected. Signing out and retrying...");
+                try {
+                    // Sign out to clear the local Amplify session
+                    await signOut();
+                    // Retry the login attempt
+                    await cognitoInitiateEmailLogin(formEmail);
+                    setEmail(formEmail);
+                    setModalMode('login');
+                    setIsModalOpen(true);
+                } catch (retryErr) {
+                    console.error("Retry attempt failed:", retryErr);
+                    setError('Ein Fehler ist nach dem Zurücksetzen der Sitzung aufgetreten.');
                 }
-                else {
-                    setError('Ein unerwarteter Fehler ist aufgetreten.');
-                }
+            } else if (err instanceof Error && err.name === 'UserNotFoundException') {
+                setError('Kein Konto mit dieser E-Mail-Adresse gefunden.');
             } else {
-                 setError('Ein unerwarteter Fehler ist aufgetreten.');
+                console.error("Email Login Error:", err);
+                setError('Ein unerwarteter Fehler ist aufgetreten.');
             }
         } finally {
             setLoading(false);
@@ -182,6 +190,9 @@ export default function AuthForm() {
         try {
             if (modalMode === 'register') {
                 await cognitoConfirm(email, confirmationCode);
+                setIsModalOpen(false);
+                setLoading(true);
+                
                 const loginResponse = await nextAuthSignIn("credentials", {
                     username: email,
                     password: password,
@@ -191,18 +202,21 @@ export default function AuthForm() {
                 await submitUserCollectible(email);
             } else { // modalMode === 'login'
                 const idToken = await cognitoCompleteEmailLogin(confirmationCode);
+                setIsModalOpen(false);
+                setLoading(true);
                 const loginResponse = await nextAuthSignIn("cognito-token", {
                     idToken: idToken,
                     redirect: false,
                 });
                 if (loginResponse?.error) throw new Error("Token-based login failed.");
             }
-    
-            setIsModalOpen(false);
             router.push("/");
             router.refresh();
     
         } catch (error) {
+            setLoading(false);
+            setIsConfirming(false);
+            setIsModalOpen(true);
             console.log(error);
             if (error instanceof Error && error.name === 'CodeMismatchException') {
                 setModalError('Der eingegebene Code ist falsch. Bitte versuchen Sie es erneut.');
@@ -245,8 +259,14 @@ export default function AuthForm() {
                             </label>
                         </div>
                     </div>
-                    {!loading && <Button type="submit">Jetzt anmelden</Button>}
-                    {!!loading && <Button disabled><Loader2 className="animate-spin" /> Bitte warten</Button>}
+                    {loading ? (
+                        <Button disabled>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Bitte warten
+                        </Button>
+                    ) : (
+                        <Button type="submit">Jetzt anmelden</Button>
+                    )}
                     {!!error && <p className="text-red-600 text-sm text-center">{error}</p>}
                 </div>
                 <div className='mt-4 text-center text-sm'>
@@ -271,8 +291,14 @@ export default function AuthForm() {
                         <Label htmlFor='password'>Passwort</Label>
                         <Input id='password' name='password' type='password' required />
                     </div>
-                    {!loading && <Button type="submit">Login mit Passwort</Button>}
-                    {!!loading && <Button disabled><Loader2 className="animate-spin" /> Bitte warten</Button>}
+                    {loading ? (
+                        <Button disabled>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Bitte warten
+                        </Button>
+                    ) : (
+                        <Button type="submit">Login mit Passwort</Button>
+                    )}
                     {!!error && <p className="text-red-600 text-sm text-center">{error}</p>}
                 </div>
                  <div className='mt-2 text-center text-sm'>
@@ -298,8 +324,14 @@ export default function AuthForm() {
                         <Label htmlFor='email'>Email</Label>
                         <Input id='email' name='email' type='email' autoComplete='email' placeholder='m@example.com' required />
                     </div>
-                    {!loading && <Button type="submit">Sende Login-Code</Button>}
-                    {!!loading && <Button disabled><Loader2 className="animate-spin" /> Bitte warten</Button>}
+                    {loading ? (
+                        <Button disabled>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Bitte warten
+                        </Button>
+                    ) : (
+                        <Button type="submit">Sende Login-Code</Button>
+                    )}
                     {!!error && <p className="text-red-600 text-sm text-center">{error}</p>}
                 </div>
                  <div className='mt-2 text-center text-sm'>
@@ -336,8 +368,6 @@ export default function AuthForm() {
                 {mode === 'login-password' && renderLoginPasswordForm()}
                 {mode === 'login-email' && renderLoginEmailForm()}
             </Card>
-
-            {/* --- CONFIRMATION CODE MODAL (for both register and login) --- */}
             <Dialog open={isModalOpen}>
                 <DialogContent className="sm:max-w-[425px]" onInteractOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
@@ -366,8 +396,6 @@ export default function AuthForm() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {/* --- "ARE YOU SURE?" ALERT DIALOG --- */}
             <AlertDialog open={isAlertOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>

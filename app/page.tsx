@@ -1,7 +1,7 @@
 import { Collectible } from "./collectible"
 import { inter, interTight } from './fonts'
 import { getServerSession } from 'next-auth';
-import { authOptions, ExtendedSession } from './api/auth/[...nextauth]/route'; // Import ExtendedSession
+import { authOptions, ExtendedSession } from '@/lib/auth';
 import Logout from "./logout";
 import { getUserFromApi, getUserCollectiblesFromApi, getCollectibleFromApi } from "@/lib/api";
 
@@ -18,7 +18,6 @@ async function getCollectibleUrl(): Promise<string | null> {
     }
 
     let user;
-    // --- Retry logic using the new direct API call ---
     for (let i = 0; i < 5; i++) {
         try {
             user = await getUserFromApi(token, userEmail);
