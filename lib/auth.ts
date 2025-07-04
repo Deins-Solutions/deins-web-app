@@ -88,11 +88,15 @@ export const authOptions: NextAuthOptions = {
                              idToken: credentials.idToken
                         };
                     }
-                    return null;
+                    throw new Error("Token is valid but payload is missing email.");
                 } catch (error) {
-                    // Add detailed logging to see the exact validation error
                     console.error("Token validation error:", error);
-                    return null;
+                   if (error instanceof Error) {
+                        // The error from jose.jwtVerify is often specific, like 'JWSSignatureVerificationFailed'
+                        // or 'JWTClaimValidationFailed'. We can pass its message.
+                        throw new Error(`Token validation failed: ${error.message}`);
+                    }
+                    throw new Error("An unknown token validation error occurred.");
                 }
             }
         })
