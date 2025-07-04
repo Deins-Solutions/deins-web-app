@@ -72,9 +72,12 @@ export const authOptions: NextAuthOptions = {
             },
             authorize: async (credentials) => {
                 if (!credentials?.idToken) return null;
-                try {
+                 try {
+                    // THE FIX: Add a clockTolerance to account for small time differences
+                    // between the Cognito server and the application server.
                     const { payload } = await jose.jwtVerify(credentials.idToken, JWKS, {
                         issuer: `https://cognito-idp.${cognitoRegion}.amazonaws.com/${userPoolId}`,
+                        clockTolerance: "30 seconds" // Allows for a 30-second clock skew
                     });
 
                     if (payload && typeof payload.email === 'string') {
