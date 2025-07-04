@@ -19,7 +19,7 @@ export interface ExtendedSession extends Session {
 }
 
 // --- Cognito Configuration ---
-const cognitoRegion = process.env.COGNITO_REGION;
+const cognitoRegion = process.env.NEXT_PUBLIC_COGNITO_REGION;
 const userPoolId = process.env.USER_POOL_ID;
 const jwksUrl = `https://cognito-idp.${cognitoRegion}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
 let jwksCache: JSONWebKeySet | null = null;
