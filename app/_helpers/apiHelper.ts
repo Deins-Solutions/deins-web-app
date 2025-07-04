@@ -2,9 +2,8 @@ import axios, { AxiosRequestConfig, Method } from 'axios';
 import { getServerSession } from "next-auth/next";
 import { authOptions, ExtendedSession } from "@/lib/auth";
 
-
-
 const API_BASE_URL = process.env.API_BASE_URL;
+
 export async function authenticatedApiCall(
     endpoint: string,
     method: Method,

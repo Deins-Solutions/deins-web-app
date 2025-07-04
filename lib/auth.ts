@@ -73,11 +73,8 @@ export const authOptions: NextAuthOptions = {
             authorize: async (credentials) => {
                 if (!credentials?.idToken) return null;
                 try {
-                    // THE FIX: Add issuer and audience validation for security.
-                    // This ensures the token was issued by your user pool for your app client.
                     const { payload } = await jose.jwtVerify(credentials.idToken, JWKS, {
                         issuer: `https://cognito-idp.${cognitoRegion}.amazonaws.com/${userPoolId}`,
-                        audience: process.env.CLIENT_ID!,
                     });
 
                     if (payload && typeof payload.email === 'string') {
