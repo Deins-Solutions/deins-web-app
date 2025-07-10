@@ -23,19 +23,16 @@ export default function RegisterPage() {
           </Suspense>
         </div>
       </section>
-      <section className={`${interTight.className} flex justify-center items-center`}>
-        <p className=" pt-14 text-xl font-bold" >
-          Wer sammelt, gewinnt
-        </p>
-      </section>
-      <section className={`${inter.className}`}>
-        <div className="flex justify-center items-center"> <p className=" pt-6 text-l font" >
-          Sichere dir die Chance auf ein Treffen mit Jürgen Klopp –
-        </p></div>
-        <div className="flex justify-center items-center"> <p className="text-l font" >
-          Digital sammeln, real erleben!
-        </p></div>
-      </section>
+     <section className={`${interTight.className} text-center px-4`}>
+          <h1 className="pt-14 text-2xl font-bold">
+            Sammeln. Unterstützen. Gewinnen
+          </h1>
+        </section>
+        <section className={`${inter.className} text-center px-4`}>
+          <p className="pt-4 text-base font-bold">
+            Jede Sammelkarte nimmt an der KloppoCar Dauerverlosung teil.
+          </p>
+        </section>
       <AuthForm />
     </div>
   );

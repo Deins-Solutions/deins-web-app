@@ -1,5 +1,8 @@
 import { Collectible } from "./collectible"
 import { inter, interTight } from './fonts'
+import Image from 'next/image';
+import iosdl from '@/public/images/iosdl.svg';
+import androiddl from '@/public/images/androiddl.svg'
 import { getServerSession } from 'next-auth';
 import { authOptions, ExtendedSession } from '@/lib/auth';
 import Logout from "./logout";
@@ -74,21 +77,48 @@ export default async function RootPage() {
       <section className="Collectible Preview pt-6">
           <Collectible url={getUrl || 'https://deins.s3.eu-central-1.amazonaws.com/Objects3d/kloppocar/KloppoCar_01.gltf'} />
       </section>
-      <section className={`${interTightFont.className} flex justify-center items-center` }>
-        <p className="text-2xl" >
-          Wer sammelt, gewinnt
+      <section className={`${interTightFont.className} text-center px-4 pt-8`}>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Super! Das hat geklappt
+        </h1>
+      </section>
+
+      <section className={`${interFont.className} text-center px-6 pt-4 text-gray-800`}>
+        <p className="text-lg font-bold">
+          Deine erste Sammelkarte ist sichergestellt. Und jetzt?
         </p>
-        </section>
-        <section className={`${interFont.className}`}>
-         <div className="flex justify-center items-center"> <p className=" pt-6 text-l text-bold font" >
-           Und du hast gerade deinen ersten Schritt gemacht
-          </p></div>
-          <div className="flex justify-center items-center"> 
-            <p className="pt-6 text-l font text-center px-4">
-              Mit jeder weiteren Karte wächst deine Chance auf das Treffen mit <span className='font-bold'>Jürgen Klopp und andere exklusive Preise.</span> Tausche, sammle und sichere dir deinen Platz, sobald unsere App verfügbar ist. Wenn es soweit ist, informieren wir dich.
-            </p>
-          </div>
-        </section>
+        <p className="pt-6 text-base font-bold leading-relaxed">
+          Um weitere Karten zu sammeln, Codes einzulösen und deine Sammlung zu verwalten, lade dir die kostenfreie DEINS app herunter.
+        </p>
+        <p className="pt-4 text-base font-bold leading-relaxed">
+          Weitere Infos und deine Karte warten in der App.
+        </p>
+      </section>
+      <section className="pt-8 px-6">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+          {/* Apple App Store Button */}
+          <a href="https://apps.apple.com/us/app/deins-scannen-sammeln/id6743440325" target="_blank" rel="noopener noreferrer" className="block transform hover:scale-105 transition-transform duration-200">
+            <Image
+              src={iosdl}
+              alt="Download on the App Store"
+              width={180}
+              height={60}
+              className="h-auto"
+            />
+          </a>
+          {/* Google Play Store Button */}
+          <a href="https://play.google.com/store/apps/details?id=com.deins.deins_app" target="_blank" rel="noopener noreferrer" className="block transform hover:scale-105 transition-transform duration-200">
+            <Image
+              src={androiddl}
+              alt="Get it on Google Play"
+              width={180}
+              height={60}
+              className="h-auto"
+            />
+          </a>
+        </div>
+      </section>
+      
     </div>
   );
 }

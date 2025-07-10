@@ -40,7 +40,7 @@ export default function AuthForm() {
                         {mode === 'login-email' && 'Login'}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        {mode === 'register' && 'Jetzt anmelden und Gewinnchance sichern.'}
+                        {mode === 'register' && 'Jetzt anmelden und erste Sammelkarte zu sichern.'}
                         {mode === 'login-password' && 'Melden Sie sich bei Ihrem Konto an.'}
                         {mode === 'login-email' && 'Erhalten Sie einen Code per E-Mail, um sich anzumelden.'}
                     </CardDescription>
